@@ -33,7 +33,7 @@ class PixelAPLoss (nn.Module):
         # compute pixel-wise AP
         n = qconf.numel()
         if n == 0: return 0
-        scores, gt = scores.view(n,-1), gt.view(n,-1)
+        scores, gt = scores.view(n, -1), gt.view(n, -1)
         ap = self.aploss(scores, gt).view(msk.shape)
 
         pixel_loss = self.loss_from_ap(ap, qconf)
@@ -53,7 +53,16 @@ class ReliabilityLoss (PixelAPLoss):
         self.name = 'reliability'
 
     def loss_from_ap(self, ap, rel):
-        return 1 - ap*rel - (1-rel)*self.base
+        #return 1 - ap * rel - (1 - rel) * self.base
+
+        if ap.detach().mean() > self.base:
+            loss = 1 - ap * rel - (1 - rel) * self.base
+        else:
+            loss = 1 - ap * rel - (1 - rel) * (ap.detach().mean())
+        '''
+        '''
+        # loss = 1 - ap * rel - (1 - rel) * (ap.detach().mean())
+        return loss
 
 
 
