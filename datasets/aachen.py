@@ -3,6 +3,8 @@
 # Available only for non-commercial use
 
 import os, pdb
+from os import path as osp
+import random
 import numpy as np
 from PIL import Image
 
@@ -13,7 +15,7 @@ from .pair_dataset import PairDataset, StillPairDataset
 class AachenImages (Dataset):
     """ Loads all images from the Aachen Day-Night dataset 
     """
-    def __init__(self, select='db day night', root='data/aachen'):
+    def __init__(self, select='db day night', root='/ssd/data/r2d2_data/aachen'):
         Dataset.__init__(self)
         self.root = root
         self.img_dir = 'images_upright'
@@ -52,7 +54,7 @@ class AachenPairs_StyleTransferDayNight (AachenImages_DB, StillPairDataset):
     """ synthetic day-night pairs of images 
         (night images obtained using autoamtic style transfer from web night images)
     """
-    def __init__(self, root='data/aachen/style_transfer', **kw):
+    def __init__(self, root='/ssd/data/r2d2_data/aachen/style_transfer_ours', **kw):
         StillPairDataset.__init__(self)
         AachenImages_DB.__init__(self, **kw)
         old_root = os.path.join(self.root, self.img_dir)
@@ -73,11 +75,77 @@ class AachenPairs_StyleTransferDayNight (AachenImages_DB, StillPairDataset):
         assert self.nimg and self.npairs
 
 
+class AachenPairs_StyleTransferDayNight_Star(StillPairDataset):
+    def __init__(self, root_img_path='/ssd/data/r2d2_data/aachen'):
+        StillPairDataset.__init__(self)
+
+        self.root_img_path = root_img_path
+        self.path_orig_img = osp.join(self.root_img_path, "images_upright", "db")
+        self.path_style_img = osp.join(self.root_img_path, "style_transfer_ours")
+
+        self.styles_transfer_dict = {"snow": "20170212_071659",
+                                     "winter_twilight": "20170223_165410",
+                                     "rainy": "20170501_110319",
+                                     "night": "20141222_110812",
+                                     "orig": None,
+                                     }
+
+        self.imgs = os.listdir(self.path_style_img)
+        self.nimg = len(self.imgs)
+        self.npairs = len(self.imgs)
+
+    def _read_image(self, fpath):
+        try:
+            return Image.open(fpath).convert('RGB')
+        except Exception as e:
+            raise IOError("Could not load image %s (reason: %s)" % (fpath, str(e)))
+            sys.exit()
+
+    def get_pair(self, pair_idx, output=()):
+        fname1 = self.imgs[pair_idx]
+        img1 = self._read_image(osp.join(self.path_style_img, fname1))
+
+        # Pattern: 952.jpg.st_20170223_165410___winter_twilight.jpg
+        orig_img, current_style = fname1.split(".st_")
+        current_style = current_style.split("___")[1][:-4]
+
+        # remove the used style from the self.styles_transfer_dict
+        styles = list(self.styles_transfer_dict.keys())
+        styles.remove(current_style)
+
+        # let us randomly pick a new style
+        style_2nd_img = random.choice(styles)
+        if style_2nd_img == "orig":
+            fname2 = osp.join(self.path_orig_img, orig_img)
+        else:
+            fname2 = osp.join(self.path_style_img,
+                              orig_img + ".st_" + self.styles_transfer_dict[style_2nd_img] + "___" + style_2nd_img + ".jpg")
+
+        img2 = self._read_image(fname2)
+
+        W, H = img1.size
+        sx = img2.size[0] / float(W)
+        sy = img2.size[1] / float(H)
+
+        meta = {}
+        if 'aflow' in output or 'flow' in output:
+            mgrid = np.mgrid[0:H, 0:W][::-1].transpose(1, 2, 0).astype(np.float32)
+            meta['aflow'] = mgrid * (sx, sy)
+            meta['flow'] = meta['aflow'] - mgrid
+
+        if 'mask' in output:
+            meta['mask'] = np.ones((H, W), np.uint8)
+
+        if 'homography' in output:
+            meta['homography'] = np.diag(np.float32([sx, sy, 1]))
+
+        return img1, img2, meta
+
 
 class AachenPairs_OpticalFlow (AachenImages_DB, PairDataset):
     """ Image pairs from Aachen db with optical flow.
     """
-    def __init__(self, root='data/aachen/optical_flow', **kw):
+    def __init__(self, root='/ssd/data/r2d2_data/aachen/optical_flow', **kw):
         PairDataset.__init__(self)
         AachenImages_DB.__init__(self, **kw)
         self.root_flow = root
@@ -135,8 +203,6 @@ class AachenPairs_OpticalFlow (AachenImages_DB, PairDataset):
             meta['mask'] = mask
         
         return img1, img2, meta
-
-
 
 
 if __name__ == '__main__':

@@ -10,7 +10,6 @@ from .dataset import Dataset, CatDataset
 from tools.transforms import instanciate_transformation
 from tools.transforms_tools import persp_apply
 
-
 class PairDataset (Dataset):
     """ A dataset that serves image pairs with ground-truth pixel correspondences.
     """

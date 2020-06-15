@@ -6,6 +6,8 @@ import os
 import json
 import pdb
 import numpy as np
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class Dataset(object):
@@ -25,7 +27,7 @@ class Dataset(object):
         return os.path.join(root or self.root, self.img_dir, self.get_key(img_idx))
 
     def get_image(self, img_idx):
-        from PIL import Image
+
         fname = self.get_filename(img_idx)
         try:
             return Image.open(fname).convert('RGB')
@@ -71,7 +73,3 @@ class CatDataset (Dataset):
         for db in self.datasets:
             fmt_str += str(db).replace("\n"," ") + ', '
         return fmt_str[:-2] + ')'
-
-
-
-

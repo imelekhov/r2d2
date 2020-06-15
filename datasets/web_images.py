@@ -12,7 +12,7 @@ class RandomWebImages (Dataset):
     """ 1 million distractors from Oxford and Paris Revisited
         see http://ptak.felk.cvut.cz/revisitop/revisitop1m/
     """
-    def __init__(self, start=0, end=1024, root="data/revisitop1m"):
+    def __init__(self, start=0, end=1024, root="/ssd/data/r2d2_data/revisitop1m"):
         Dataset.__init__(self)
         self.root = root
         
