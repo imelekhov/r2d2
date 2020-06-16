@@ -69,7 +69,7 @@ default_dataloader = """PairLoader(CatPairDataset(`data`),
     scale   = 'RandomScale(256,1024,can_upscale=True)',
     distort = 'ColorJitter(0.2,0.2,0.2,0.1)',
     crop    = 'RandomCrop(192)',
-    do_color_aug=True)"""
+    do_color_aug=False)"""
 
 val_dataloader = """PairLoader(CatPairDataset(`data`),
     scale   = 'RandomScale(256,1024,can_upscale=True)',
