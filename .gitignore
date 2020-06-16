@@ -1,2 +1,5 @@
 snapshots
 datasets/__pycache__
+nets/__pycache__
+tools/__pycache__
+__pycache__
