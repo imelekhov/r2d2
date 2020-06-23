@@ -170,7 +170,7 @@ class AachenPairsStyleTransferOur(StillPairDataset):
 
         if self.m2m:
             # let us randomly choose one of the styles
-            style_1st_img = random.choice(self.style2fnames.keys())
+            style_1st_img = random.choice(list(self.style2fnames.keys()))
             if style_1st_img != "orig":
                 fname1 += ".st_" + random.choice(self.style2fnames[style_1st_img])[:-4] + "___" + style_1st_img + ".jpg"
                 img1 = self._read_image(osp.join(self.styles_img_path, fname1))
