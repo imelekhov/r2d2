@@ -32,6 +32,9 @@ class PhototourismStyleImages(PairDataset):
         self.path_style_img = "/data/datasets/phototourism/style_transfer_all"
         self.style2fnames = get_style2fnames()
 
+        # a dirty hack
+        self.crop_size = 192
+
         self.imgs = [line.rstrip("\n") for line in open(self.txt_fn)]
         self.nimg = len(self.imgs)
         self.npairs = len(self.imgs)
@@ -54,7 +57,7 @@ class PhototourismStyleImages(PairDataset):
         img1 = self._read_image(osp.join(self.path_orig_img, fpath1))
         scene, _, _, fname1 = fpath1.split("/")
         # let us randomly choose one of the styles
-        style_2nd_img = random.choice(self.style2fnames.keys())
+        style_2nd_img = random.choice(list(self.style2fnames.keys()))
         if style_2nd_img == "orig":
             img2 = img1.copy()
         else:
@@ -67,7 +70,7 @@ class PhototourismStyleImages(PairDataset):
 
         if self.style2style:
             # let us randomly choose one of the styles
-            style_1st_img = random.choice(self.style2fnames.keys())
+            style_1st_img = random.choice(list(self.style2fnames.keys()))
             if style_1st_img == "orig":
                 img1, img2 = self._get_pair_orig2style(pair_idx)
             else:
@@ -91,6 +94,14 @@ class PhototourismStyleImages(PairDataset):
         W, H = img1.size
         sx = img2.size[0] / float(W)
         sy = img2.size[1] / float(H)
+
+        s = float(min(min(W, H), self.crop_size))
+        if s != self.crop_size:
+            # compute the ratio
+            r = int(np.floor(self.crop_size / s) + 1)
+            W, H = W * r, H * r
+            img1 = img1.resize((W, H), Image.BILINEAR)
+            img2 = img2.resize((W, H), Image.BILINEAR)
 
         meta = {}
         if 'aflow' in output or 'flow' in output:

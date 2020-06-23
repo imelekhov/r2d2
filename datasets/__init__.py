@@ -49,7 +49,7 @@ except AssertionError as e:
     print(f"Dataset phototourism_style_dataset_train not available, reason: {e}", file=sys.stderr)
 
 try:
-    phototourism_style_dataset_val = PhototourismStyleImages(txt_fn="data/val_phototourism_st_small_fltrd.txt")
+    phototourism_style_dataset_val = PhototourismStyleImages(txt_fn="data/val_phototourism_ms.txt")
 except AssertionError as e:
     print(f"Dataset phototourism_style_dataset_train not available, reason: {e}", file=sys.stderr)
 
