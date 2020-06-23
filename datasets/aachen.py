@@ -10,6 +10,7 @@ from PIL import Image
 
 from .dataset import Dataset
 from .pair_dataset import PairDataset, StillPairDataset
+from utils import get_style2fnames
 
 
 class AachenImages (Dataset):
@@ -36,8 +37,7 @@ class AachenImages (Dataset):
         return self.imgs[idx]
 
 
-
-class AachenImages_DB (AachenImages):
+class AachenImages_DB(AachenImages):
     """ Only database (db) images.
     """
     def __init__(self, **kw):
@@ -47,7 +47,6 @@ class AachenImages_DB (AachenImages):
     def get_tag(self, idx): 
         # returns image tag == img number (name)
         return os.path.split( self.imgs[idx][:-4] )[1]
-
 
 
 class AachenPairs_StyleTransferDayNight (AachenImages_DB, StillPairDataset):
@@ -122,6 +121,69 @@ class AachenPairs_StyleTransferDayNight_Star(StillPairDataset):
                               orig_img + ".st_" + self.styles_transfer_dict[style_2nd_img] + "___" + style_2nd_img + ".jpg")
 
         img2 = self._read_image(fname2)
+
+        W, H = img1.size
+        sx = img2.size[0] / float(W)
+        sy = img2.size[1] / float(H)
+
+        meta = {}
+        if 'aflow' in output or 'flow' in output:
+            mgrid = np.mgrid[0:H, 0:W][::-1].transpose(1, 2, 0).astype(np.float32)
+            meta['aflow'] = mgrid * (sx, sy)
+            meta['flow'] = meta['aflow'] - mgrid
+
+        if 'mask' in output:
+            meta['mask'] = np.ones((H, W), np.uint8)
+
+        if 'homography' in output:
+            meta['homography'] = np.diag(np.float32([sx, sy, 1]))
+
+        return img1, img2, meta
+
+
+class AachenPairsStyleTransferOur(StillPairDataset):
+    def __init__(self, content_img_path='/ssd/data/r2d2_data/aachen/images_upright/db',
+                 styles_img_path="/data/datasets/Aachen-Day-Night/style_transfer_all",
+                 m2m=True):
+        StillPairDataset.__init__(self)
+
+        self.content_img_path = content_img_path
+        self.styles_img_path = styles_img_path
+        self.m2m = m2m
+        self.style2fnames = get_style2fnames()
+
+        self.imgs = os.listdir(self.content_img_path)
+        self.nimg = len(self.imgs)
+        self.npairs = len(self.imgs)
+
+    def _read_image(self, fpath):
+        try:
+            return Image.open(fpath).convert('RGB')
+        except Exception as e:
+            raise IOError("Could not load image %s (reason: %s)" % (fpath, str(e)))
+            sys.exit()
+
+    def get_pair(self, pair_idx, output=()):
+        style_1st_img = "orig"
+        fname1 = self.imgs[pair_idx]
+        img1 = self._read_image(osp.join(self.content_img_path, fname1))
+
+        if self.m2m:
+            # let us randomly choose one of the styles
+            style_1st_img = random.choice(self.style2fnames.keys())
+            if style_1st_img != "orig":
+                fname1 += ".st_" + random.choice(self.style2fnames[style_1st_img])[:-4] + "___" + style_1st_img + ".jpg"
+                img1 = self._read_image(osp.join(self.styles_img_path, fname1))
+
+        styles = list(self.style2fnames.keys())
+        styles.remove(style_1st_img)
+        style_2nd_img = random.choice(styles)
+        if style_2nd_img != "orig":
+            fname2 = self.imgs[pair_idx] + ".st_" + \
+                     random.choice(self.style2fnames[style_2nd_img])[:-4] + "___" + style_2nd_img + ".jpg"
+            img2 = self._read_image(osp.join(self.styles_img_path, fname2))
+        else:
+            img2 = self._read_image(osp.join(self.content_img_path, fname1))
 
         W, H = img1.size
         sx = img2.size[0] / float(W)
