@@ -53,8 +53,8 @@ class ReliabilityLoss (PixelAPLoss):
         self.name = 'reliability'
 
     def loss_from_ap(self, ap, rel):
-        #return 1 - ap * rel - (1 - rel) * self.base
-
+        return 1 - ap * rel - (1 - rel) * self.base
+        '''
         if ap.detach().mean() > self.base:
             loss = 1 - ap * rel - (1 - rel) * self.base
         else:
@@ -63,6 +63,7 @@ class ReliabilityLoss (PixelAPLoss):
         '''
         # loss = 1 - ap * rel - (1 - rel) * (ap.detach().mean())
         return loss
+        '''
 
 
 
