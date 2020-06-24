@@ -53,6 +53,10 @@ db_phototourism_style_val = """TransformedPairs(
     phototourism_style_dataset_val,
             'RandomScale(256,1024,can_upscale=True), RandomTilting(0.5), PixelNoise(25)')"""
 
+db_aachen_style_transfer_our = """TransformedPairs(
+    aachen_style_transfer_pairs_our,
+            'RandomScale(256,1024,can_upscale=True), RandomTilting(0.5), PixelNoise(25)')"""
+
 db_aachen_flow = "aachen_flow_pairs"
 
 data_sources = dict(
@@ -63,6 +67,7 @@ data_sources = dict(
     S = db_aachen_style_transfer,
     P = db_phototourism_train,
     X = db_phototourism_style_train,
+    U = db_aachen_style_transfer_our,
     )
 
 default_dataloader = """PairLoader(CatPairDataset(`data`),
@@ -159,7 +164,7 @@ if __name__ == '__main__':
     scheduler = WarmupScheduler(optimizer,
                                 total_epochs=args.epochs,
                                 warmup_for=5,
-                                min_lr=args.learning_rate / 60.)
+                                min_lr=args.learning_rate / args.epochs)
 
     trainer = Trainer(net, train_loader, val_loader, loss, optimizer, scheduler)
     if iscuda: trainer = trainer.cuda()
