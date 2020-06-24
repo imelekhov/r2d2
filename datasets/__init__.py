@@ -29,6 +29,11 @@ except AssertionError as e:
     print(f"Dataset aachen_style_transfer_pairs not available, reason: {e}", file=sys.stderr)
 
 try:
+    aachen_style_transfer_pairs_our = AachenPairsStyleTransferOur(m2m=False)
+except AssertionError as e:
+    print(f"Dataset aachen_style_transfer_pairs_our not available, reason: {e}", file=sys.stderr)
+
+try:
     aachen_flow_pairs = AachenPairs_OpticalFlow()
 except AssertionError as e:
     print(f"Dataset aachen_flow_pairs not available, reason: {e}", file=sys.stderr)
